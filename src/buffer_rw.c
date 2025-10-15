@@ -205,6 +205,70 @@ int l_buffer_write_u32le(lua_State* L) {
   return 1;
 }
 
+int l_buffer_read_u16le(lua_State* L) {
+  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+  lua_Integer offset = luaL_optinteger(L, 2, 0);
+
+  if (offset < 0 || (size_t)offset + 2 > buf->size)
+    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+
+  const uint8_t* p = buf->buffer + (size_t)offset;
+  uint16_t value = ((uint16_t)p[0]) | ((uint16_t)p[1] << 8);
+
+  lua_pushinteger(L, (lua_Integer)value);
+  return 1;
+}
+
+int l_buffer_write_u16le(lua_State* L) {
+  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+  lua_Integer value = luaL_checkinteger(L, 2);
+  lua_Integer offset = luaL_optinteger(L, 3, 0);
+
+  if (offset < 0 || (size_t)offset + 2 > buf->size)
+    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+
+  uint8_t* p = buf->buffer + (size_t)offset;
+  uint16_t v = (uint16_t)value;
+
+  p[0] = v & 0xFF;
+  p[1] = (v >> 8) & 0xFF;
+
+  lua_pushinteger(L, offset + 2);
+  return 1;
+}
+
+int l_buffer_read_i16le(lua_State* L) {
+  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+  lua_Integer offset = luaL_optinteger(L, 2, 0);
+
+  if (offset < 0 || (size_t)offset + 2 > buf->size)
+    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+
+  const uint8_t* p = buf->buffer + (size_t)offset;
+  int16_t value = (int16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+
+  lua_pushinteger(L, (lua_Integer)value);
+  return 1;
+}
+
+int l_buffer_write_i16le(lua_State* L) {
+  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+  lua_Integer value = luaL_checkinteger(L, 2);
+  lua_Integer offset = luaL_optinteger(L, 3, 0);
+
+  if (offset < 0 || (size_t)offset + 2 > buf->size)
+    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+
+  uint8_t* p = buf->buffer + (size_t)offset;
+  int16_t v = (int16_t)value;
+
+  p[0] = v & 0xFF;
+  p[1] = (v >> 8) & 0xFF;
+
+  lua_pushinteger(L, offset + 2);
+  return 1;
+}
+
 int l_buffer_tostring(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   const char* encoding = luaL_optstring(L, 2, ENCODING_UTF8);
@@ -238,5 +302,58 @@ int l_buffer_tostring(lua_State* L) {
     return luaL_error(L, "Unsupported encoding: %s", encoding);
   }
 
+  return 1;
+}
+
+int l_buffer_write_string(lua_State* L) {
+  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+  size_t str_len;
+  const char* str = luaL_checklstring(L, 2, &str_len);
+
+  lua_Integer offset = 0;
+  lua_Integer length = -1;
+  const char* encoding = ENCODING_UTF8;
+  int argn = lua_gettop(L);
+
+  // Parse optional arguments
+  int argi = 3;
+  if (argi <= argn && lua_isnumber(L, argi)) {
+    offset = lua_tointeger(L, argi);
+    argi = argi + 1;
+  }
+  if (argi <= argn && lua_isnumber(L, argi)) {
+    length = lua_tointeger(L, argi);
+    argi = argi + 1;
+  }
+  if (argi <= argn && lua_isstring(L, argi)) {
+    encoding = lua_tostring(L, argi);
+  }
+
+  // if (offset < 0) return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+
+  if (length < 0 || (size_t)length > str_len) length = str_len;
+  size_t write_len = (size_t)length;
+
+  if (offset < 0 || (size_t)offset + write_len > buf->size)
+    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+
+  if (strcasecmp(encoding, ENCODING_UTF8) == 0) {
+    memcpy(buf->buffer + offset, str, write_len);
+  } else if (strcasecmp(encoding, ENCODING_BASE16) == 0) {
+    size_t decoded_len = 0;
+    uint8_t* decoded = hex_decode(str, &decoded_len);
+    if (!decoded) return luaL_error(L, ERR_INVALID_HEX_STRING);
+    if ((size_t)offset + decoded_len > buf->size) {
+      FREE(decoded);
+      return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+    }
+    memcpy(buf->buffer + offset, decoded, decoded_len);
+    write_len = decoded_len;
+    FREE(decoded);
+  } else {
+    return luaL_error(L, ERR_UNSUPPORTED_ENCODING, encoding);
+  }
+
+  lua_pushinteger(L, offset + write_len);
   return 1;
 }
