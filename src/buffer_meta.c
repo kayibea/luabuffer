@@ -13,7 +13,8 @@
 
 int l_buffer__gc(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  if (buf->buffer) FREE(buf->buffer);
+  // if (buf->buffer) FREE(buf->buffer);
+  FREE(buf->buffer);
   return 0;
 }
 
@@ -53,6 +54,7 @@ int l_buffer__len(lua_State* L) {
 int l_buffer__index(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
 
+  // TODO: Remove type check redoundouncy
   if (lua_type(L, 2) == LUA_TNUMBER && lua_isinteger(L, 2)) {
     lua_Integer idx = luaL_checkinteger(L, 2);
     if (idx >= 1 && idx <= (lua_Integer)buf->size) {
