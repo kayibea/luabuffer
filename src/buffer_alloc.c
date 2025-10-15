@@ -35,6 +35,7 @@ int l_buffer_from(lua_State* L) {
     case LUA_TUSERDATA: {
       if (luaL_testudata(L, 1, BUFFER_MT)) return buffer_alloc_fbuffer(L);
       if (luaL_testudata(L, 1, LUA_FILEHANDLE)) return buffer_alloc_fstream(L);
+      [[fallthrough]];
     }
     default: {
       const char* tname = luaL_typename(L, 1);
