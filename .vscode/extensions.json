@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "ms-vscode.cpptools-extension-pack",
+    "sumneko.lua",
+    "ms-vscode.makefile-tools"
+  ]
+}
