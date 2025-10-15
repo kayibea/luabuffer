@@ -91,9 +91,6 @@ static int buffer_alloc_ftable(lua_State* L) {
   luaL_checktype(L, 1, LUA_TTABLE);
   size_t len = (size_t)lua_rawlen(L, 1);
 
-  // if (len == 0) return luaL_error(L, "Cannot create buffer from empty
-  // table");
-
   Buffer* buf = lua_newuserdata(L, sizeof(Buffer));
   buf->size = len;
   buf->buffer = malloc(len);
@@ -134,6 +131,7 @@ static int buffer_alloc_fbuffer(lua_State* L) {
   return 1;
 }
 
+// TODO: Handle empty string?
 static int buffer_alloc_fstring(lua_State* L) {
   size_t in_len;
   const char* input = luaL_checklstring(L, 1, &in_len);
