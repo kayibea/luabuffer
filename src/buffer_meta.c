@@ -13,9 +13,7 @@
 
 int l_buffer__gc(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  if (buf->buffer) {
-    FREE(buf->buffer);
-  }
+  if (buf->buffer) FREE(buf->buffer);
   return 0;
 }
 
@@ -55,14 +53,12 @@ int l_buffer__len(lua_State* L) {
 int l_buffer__index(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
 
-  if (lua_type(L, 2) == LUA_TNUMBER) {
-    size_t index = (size_t)luaL_checkinteger(L, 2);
-    if (index < 1 || index > buf->size) {
-      lua_pushnil(L);
+  if (lua_type(L, 2) == LUA_TNUMBER && lua_isinteger(L, 2)) {
+    lua_Integer idx = luaL_checkinteger(L, 2);
+    if (idx >= 1 && idx <= (lua_Integer)buf->size) {
+      lua_pushinteger(L, (lua_Integer)buf->buffer[idx - 1]);
       return 1;
     }
-    lua_pushinteger(L, (lua_Integer)buf->buffer[index - 1]);
-    return 1;
   }
 
   luaL_getmetatable(L, BUFFER_MT);
@@ -86,7 +82,7 @@ int l_buffer__newindex(lua_State* L) {
 
 int l_buffer__tostring(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  size_t display_len = MIN(buf->size, BUFFER_INSPECT_MAX_BYTES);
+  size_t display_len = (size_t)MIN(buf->size, BUFFER_INSPECT_MAX_BYTES);
 
   luaL_Buffer b;
   luaL_buffinit(L, &b);
