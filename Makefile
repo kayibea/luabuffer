@@ -1,6 +1,6 @@
 CC        = cc
-INC   		= -Iinclude -Iextern/hexlib
-CFLAGS    = -std=c99 -O2 -Wall -Werror -fPIC $(INC)
+INCLUDE   = -Iinclude -Iextern/hexlib
+CFLAGS    = -std=c99 -O2 -Wall -Wextra -Werror -fPIC $(INCLUDE)
 LDFLAGS   = -shared -llua
 
 TARGET    = buffer
