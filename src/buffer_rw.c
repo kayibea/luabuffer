@@ -20,7 +20,6 @@ int l_buffer_write_f32le(lua_State* L) {
   float value = (float)luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 0);
 
-  // if (offset + 4 > buf->size) return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
   if (offset < 0 || (size_t)offset + 4 > buf->size)
     return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
 
@@ -34,7 +33,6 @@ int l_buffer_write_f32be(lua_State* L) {
   float value = (float)luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 0);
 
-  // if (offset + 4 > buf->size) return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
   if (offset < 0 || (size_t)offset + 4 > buf->size)
     return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
 
@@ -51,7 +49,6 @@ int l_buffer_read_f32le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 0);
 
-  // if (offset + 4 > buf->size) return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
   if (offset < 0 || (size_t)offset + 4 > buf->size)
     return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
 
@@ -65,7 +62,6 @@ int l_buffer_read_f32be(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 0);
 
-  // if (offset + 4 > buf->size) return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
   if (offset < 0 || (size_t)offset + 4 > buf->size)
     return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
 
@@ -84,7 +80,6 @@ int l_buffer_write_f64le(lua_State* L) {
   double value = (double)luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 0);
 
-  // if (offset + 8 > buf->size) return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
   if (offset < 0 || (size_t)offset + 4 > buf->size)
     return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
 
@@ -98,7 +93,6 @@ int l_buffer_write_f64be(lua_State* L) {
   double value = (double)luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 0);
 
-  // if (offset + 8 > buf->size) return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
   if (offset < 0 || (size_t)offset + 4 > buf->size)
     return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
 
@@ -115,7 +109,6 @@ int l_buffer_read_f64le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 0);
 
-  // if (offset + 8 > buf->size) return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
   if (offset < 0 || (size_t)offset + 4 > buf->size)
     return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
 
@@ -129,7 +122,6 @@ int l_buffer_read_f64be(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 0);
 
-  // if (offset + 8 > buf->size) return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
   if (offset < 0 || (size_t)offset + 4 > buf->size)
     return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
 
@@ -212,9 +204,6 @@ int l_buffer_write_u32le(lua_State* L) {
   lua_pushinteger(L, offset + 4);
   return 1;
 }
-
-// start = MIN(MAX(start, 0), buf->size);
-// end = MIN(MAX(end, 0), buf->size);
 
 int l_buffer_tostring(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
