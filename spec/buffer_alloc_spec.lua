@@ -14,9 +14,7 @@ describe("Buffer allocation", function()
       end
     end)
 
-    -- it("throws on negative or zero size", function()
     it("throws on negative size", function()
-      -- assert.has_error(function() buffer.alloc(0) end)
       assert.has_error(function() buffer.alloc(-5) end)
     end)
 
@@ -67,10 +65,53 @@ describe("Buffer allocation", function()
       end
     end)
 
-    it("will eventually support table-of-bytes as source", function()
-      pending("TODO: implement table-of-bytes overload", function()
+    it("creates buffer from another buffer", function()
+      local src = buffer.from("abc")
+      local buf = buffer.from(src)
+      assert.are.equal(#buf, #src)
+      for i = 1, #src do
+        assert.are.equal(buf[i], src[i])
+      end
+    end)
 
-      end)
+    it("creates buffer from table of bytes", function()
+      local t = { 97, 98, 99, 100 }
+      local buf = buffer.from(t)
+      assert.are.equal(#buf, 4)
+      assert.are.same({ buf[1], buf[2], buf[3], buf[4] }, { 97, 98, 99, 100 })
+    end)
+
+    it("errors if table contains non-numeric values", function()
+      local t = { 1, 2, "foo", 4 }
+      assert.has_error(function() buffer.from(t) end)
+    end)
+
+    it("masks table values outside 0-255", function()
+      local t = { 257, -1, 512 }
+      local buf = buffer.from(t)
+      assert.are.same({ buf[1], buf[2], buf[3] }, { 1, 255, 0 })
+    end)
+
+    it("creates empty buffer from empty string", function()
+      local buf = buffer.from("")
+      assert.are.equal(#buf, 0)
+    end)
+
+    it("creates empty buffer from empty table", function()
+      local buf = buffer.from({})
+      assert.are.equal(#buf, 0)
+    end)
+
+    it("creates buffer from file handle", function()
+      local fname = os.tmpname()
+      local f = io.open(fname, "wb")
+      f:write("filedata")
+      f:close()
+      local f2 = io.open(fname, "rb")
+      local buf = buffer.from(f2)
+      assert.are.equal(#buf, 8)
+      assert.are.same({ buf[1], buf[2], buf[3], buf[4] }, { string.byte("file", 1, 4) })
+      f2:close()
     end)
 
     it("throws on invalid source type", function()
