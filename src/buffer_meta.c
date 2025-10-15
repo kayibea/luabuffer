@@ -8,13 +8,13 @@
 #include <sys/param.h>
 
 #include "buffer.h"
+#include "common.h"
 #include "errors.h"
 
 int l_buffer__gc(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   if (buf->buffer) {
-    free(buf->buffer);
-    buf->buffer = NULL;
+    FREE(buf->buffer);
   }
   return 0;
 }

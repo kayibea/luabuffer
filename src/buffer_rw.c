@@ -10,6 +10,7 @@
 #include <sys/param.h>
 
 #include "buffer.h"
+#include "common.h"
 #include "errors.h"
 #include "hexlib.h"
 #include "utils.h"
@@ -242,7 +243,7 @@ int l_buffer_tostring(lua_State* L) {
     char* hexstr = hex_encode(slice_buf, slice_len);
     if (!hexstr) return throw_lua_oom(L, slice_len);
     lua_pushstring(L, hexstr);
-    free(hexstr);
+    FREE(hexstr);
 
   } else {
     return luaL_error(L, "Unsupported encoding: %s", encoding);

@@ -9,6 +9,7 @@
 #include <strings.h>
 
 #include "buffer.h"
+#include "common.h"
 #include "errors.h"
 #include "hexlib.h"
 
@@ -71,7 +72,7 @@ static int buffer_alloc_fstream(lua_State* L) {
 
   size_t got = fread(data, 1, (size_t)size, stream->f);
   if (got == 0) {
-    free(data);
+    FREE(data);
     return luaL_error(L, "Failed to read from file (empty or unreadable)");
   }
 
@@ -232,7 +233,7 @@ int l_buffer_alloc(lua_State* L) {
         for (size_t i = 0; i < buf->size; i++)
           buf->buffer[i] = data[i % data_len];
 
-        if (data != (uint8_t*)fill_str) free(data);
+        if (data != (uint8_t*)fill_str) FREE(data);
         break;
       }
 
