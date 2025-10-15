@@ -291,13 +291,11 @@ int l_buffer_tostring(lua_State* L) {
 
   if (strcasecmp(encoding, ENCODING_UTF8) == 0) {
     lua_pushlstring(L, (const char*)slice_buf, slice_len);
-
   } else if (strcasecmp(encoding, ENCODING_BASE16) == 0) {
     char* hexstr = hex_encode(slice_buf, slice_len);
     if (!hexstr) return throw_lua_oom(L, slice_len);
     lua_pushstring(L, hexstr);
     FREE(hexstr);
-
   } else {
     return luaL_error(L, "Unsupported encoding: %s", encoding);
   }
@@ -305,56 +303,72 @@ int l_buffer_tostring(lua_State* L) {
   return 1;
 }
 
+// FIXME:  This pile of shit need more reviews (and maybe rewriten)
 int l_buffer_write_string(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   size_t str_len;
   const char* str = luaL_checklstring(L, 2, &str_len);
 
-  lua_Integer offset = 1;
-  lua_Integer length = -1;
+  lua_Integer offset = 1;   // Lua 1-based default
+  lua_Integer length = -1;  // -1 == unspecified
   const char* encoding = ENCODING_UTF8;
-  int argn = lua_gettop(L);
 
-  // Parse optional arguments
-  int argi = 3;
-  if (argi <= argn && lua_isnumber(L, argi)) {
-    offset = lua_tointeger(L, argi);
-    argi = argi + 1;
-  }
-  if (argi <= argn && lua_isnumber(L, argi)) {
-    length = lua_tointeger(L, argi);
-    argi = argi + 1;
-  }
-  if (argi <= argn && lua_isstring(L, argi)) {
-    encoding = lua_tostring(L, argi);
-  }
+  if (!lua_isnoneornil(L, 3)) offset = luaL_checkinteger(L, 3);
+  if (!lua_isnoneornil(L, 4)) length = luaL_checkinteger(L, 4);
+  if (!lua_isnoneornil(L, 5)) encoding = luaL_checkstring(L, 5);
 
-  offset = offset - 1;
-  if (offset < 0) return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
-
-  if (length < 0 || (size_t)length > str_len) length = str_len;
-  size_t write_len = (size_t)length;
-
-  if ((size_t)offset + write_len > buf->size)
+  // validate offset: 1 .. buf->size (inclusive)
+  if (offset < 1 || offset > (lua_Integer)buf->size)
     return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
 
+  // compute remaining space starting from this 1-based offset:
+  // remaining = buf->size - (offset - 1)
+  size_t remaining = buf->size - (size_t)(offset - 1);
+
+  // default length: min(string length, buffer length) per your request
+  if (lua_isnoneornil(L, 4)) {
+    length = (lua_Integer)MIN(str_len, buf->size);
+    // length =
+    //     (lua_Integer)((str_len < (size_t)buf->size) ? (lua_Integer)str_len
+    //                                                 :
+    //                                                 (lua_Integer)buf->size);
+  }
+
+  // validate length: 0..buf->size (0 allowed -> write nothing)
+  if (length < 0 || length > (lua_Integer)buf->size)
+    return luaL_error(L, "Error here");
+
+  // if length == 0 or nothing remains to write, return 0
+  if (length == 0 || remaining == 0) {
+    lua_pushinteger(L, 0);
+    return 1;
+  }
+
+  // 0-based write offset in C:
+  size_t write_offset = (size_t)(offset - 1);
+
+  // compute final write_len = min(length, str_len, remaining)
+  size_t write_len = (size_t)length;
+  if (write_len > str_len) write_len = str_len;
+  if (write_len > remaining) write_len = remaining;
+
   if (strcasecmp(encoding, ENCODING_UTF8) == 0) {
-    memcpy(buf->buffer + offset, str, write_len);
+    memcpy(buf->buffer + write_offset, str, write_len);
   } else if (strcasecmp(encoding, ENCODING_BASE16) == 0) {
     size_t decoded_len = 0;
     uint8_t* decoded = hex_decode(str, &decoded_len);
     if (!decoded) return luaL_error(L, ERR_INVALID_HEX_STRING);
-    if ((size_t)offset + decoded_len > buf->size) {
-      FREE(decoded);
-      return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
-    }
-    memcpy(buf->buffer + offset, decoded, decoded_len);
+
+    // decoded_len might be larger than we can write, cap it
+    if (decoded_len > write_len) decoded_len = write_len;
+
+    memcpy(buf->buffer + write_offset, decoded, decoded_len);
     write_len = decoded_len;
     FREE(decoded);
   } else {
     return luaL_error(L, ERR_UNSUPPORTED_ENCODING, encoding);
   }
 
-  lua_pushinteger(L, offset + write_len + 1);
+  lua_pushinteger(L, (lua_Integer)write_len);
   return 1;
 }
