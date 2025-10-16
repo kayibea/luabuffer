@@ -75,10 +75,9 @@ int l_buffer__newindex(lua_State* L) {
   size_t index = (size_t)luaL_checkinteger(L, 2);
   lua_Integer value = luaL_checkinteger(L, 3);
 
-  if (index < 1 || index > buf->size)
-    return luaL_error(L, "Index out of range");
+  if (index >= 1 && index <= buf->size)
+    buf->buffer[index - 1] = (uint8_t)(value & 0xFF);
 
-  buf->buffer[index - 1] = (uint8_t)(value & 0xFF);
   return 0;
 }
 

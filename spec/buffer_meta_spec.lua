@@ -46,10 +46,10 @@ describe("Buffer metatable methods", function()
     assert.is_nil(buf[3])
   end)
 
-  it("out-of-bounds __newindex errors", function()
+  it("out-of-bounds __newindex should be ignored", function()
     local buf = buffer.alloc(2)
-    assert.has_error(function() buf[0] = 1 end)
-    assert.has_error(function() buf[3] = 1 end)
+    assert.has_no_error(function() buf[0] = 1 end)
+    assert.has_no_error(function() buf[3] = 1 end)
   end)
 
   -- __gc cannot be directly tested, but we can at least call it manually
