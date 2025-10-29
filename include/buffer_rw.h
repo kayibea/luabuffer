@@ -4,6 +4,9 @@
 
 int l_buffer_tostring(lua_State* L);
 int l_buffer_write_string(lua_State* L);
+
+int l_buffer_read_i16be(lua_State* L);
+int l_buffer_write_i16be(lua_State* L);
 int l_buffer_read_u16le(lua_State* L);
 int l_buffer_write_u16le(lua_State* L);
 int l_buffer_read_i16le(lua_State* L);

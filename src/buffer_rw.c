@@ -236,6 +236,37 @@ int l_buffer_write_u16le(lua_State* L) {
   return 1;
 }
 
+int l_buffer_write_i16be(lua_State* L) {
+  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+  lua_Number value = luaL_checknumber(L, 2);
+  lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
+
+  buffer_check(L, buf, offset, SIZE_INT16);
+
+  uint8_t* p = buf->buffer + (size_t)offset;
+  int16_t v = (int16_t)value;
+
+  p[0] = (v >> 8) & 0xFF;
+  p[1] = v & 0xFF;
+
+  lua_pushinteger(L, offset + SIZE_INT16 + 1);
+  return 1;
+}
+
+int l_buffer_read_i16be(lua_State* L) {
+  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+  lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
+
+  buffer_check(L, buf, offset, SIZE_INT16);
+
+  const uint8_t* p = buf->buffer + (size_t)offset;
+  int16_t value = (int16_t)(((uint16_t)p[0] << 8) | p[1]);
+
+  lua_pushinteger(L, (lua_Integer)value);
+
+  return 1;
+}
+
 int l_buffer_read_i16le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
@@ -243,7 +274,7 @@ int l_buffer_read_i16le(lua_State* L) {
   buffer_check(L, buf, offset, SIZE_INT16);
 
   const uint8_t* p = buf->buffer + (size_t)offset;
-  int16_t value = (int16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+  int16_t value = (int16_t)(p[0] | ((uint16_t)p[1] << 8));
 
   lua_pushinteger(L, (lua_Integer)value);
   return 1;

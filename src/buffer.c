@@ -10,14 +10,16 @@
 
 static const luaL_Reg buffer_methods[] = {
     //
+    {"write", l_buffer_write_string},
     {"tostring", l_buffer_tostring},
     {"readUInt32LE", l_buffer_read_u32le},
     {"readUInt32BE", l_buffer_read_u32be},
     {"readUInt16LE", l_buffer_read_u16le},
     {"writeUInt16LE", l_buffer_write_u16le},
+    {"readInt16BE", l_buffer_read_i16be},
+    {"writeInt16BE", l_buffer_write_i16be},
     {"readInt16LE", l_buffer_read_i16le},
     {"writeInt16LE", l_buffer_write_i16le},
-    {"write", l_buffer_write_string},
     {"readFloatLE", l_buffer_read_f32le},
     {"readFloatBE", l_buffer_read_f32be},
     {"readDoubleLE", l_buffer_read_f64le},
