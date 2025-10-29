@@ -15,16 +15,27 @@
 #include "hexlib.h"
 #include "utils.h"
 
+static inline void buffer_check(lua_State* L, const Buffer* buf,
+                                lua_Integer offset, size_t len) {
+  if (offset < 0)
+    luaL_error(L, "offset is out of range (expected >= 1, got %I)", offset + 1);
+
+  if ((size_t)offset + len > buf->size)
+    luaL_error(L,
+               "attempt to access memory outside buffer bounds (offset=%I, "
+               "size=%I, len=%I)",
+               offset + 1, (lua_Integer)buf->size, (lua_Integer)len);
+}
+
 int l_buffer_write_f32le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   float value = (float)luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 4 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_F32);
 
-  memcpy(buf->buffer + (size_t)offset, &value, 4);
-  lua_pushinteger(L, offset + 4 + 1);
+  memcpy(buf->buffer + (size_t)offset, &value, SIZE_F32);
+  lua_pushinteger(L, offset + SIZE_F32 + 1);
   return 1;
 }
 
@@ -33,15 +44,14 @@ int l_buffer_write_f32be(lua_State* L) {
   float value = (float)luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 4 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_F32);
 
-  uint8_t tmp[4];
-  memcpy(tmp, &value, 4);
-  reverse_bytes(tmp, 4);
-  memcpy(buf->buffer + (size_t)offset, tmp, 4);
+  uint8_t tmp[SIZE_F32];
+  memcpy(tmp, &value, SIZE_F32);
+  reverse_bytes(tmp, SIZE_F32);
+  memcpy(buf->buffer + (size_t)offset, tmp, SIZE_F32);
 
-  lua_pushinteger(L, offset + 4 + 1);
+  lua_pushinteger(L, offset + SIZE_F32 + 1);
   return 1;
 }
 
@@ -49,11 +59,10 @@ int l_buffer_read_f32le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 4 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_F32);
 
   float value;
-  memcpy(&value, buf->buffer + (size_t)offset, 4);
+  memcpy(&value, buf->buffer + (size_t)offset, SIZE_F32);
   lua_pushnumber(L, (lua_Number)value);
   return 1;
 }
@@ -62,14 +71,13 @@ int l_buffer_read_f32be(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 4 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_F32);
 
-  uint8_t tmp[4];
-  memcpy(tmp, buf->buffer + (size_t)offset, 4);
-  reverse_bytes(tmp, 4);
+  uint8_t tmp[SIZE_F32];
+  memcpy(tmp, buf->buffer + (size_t)offset, SIZE_F32);
+  reverse_bytes(tmp, SIZE_F32);
   float value;
-  memcpy(&value, tmp, 4);
+  memcpy(&value, tmp, SIZE_F32);
 
   lua_pushnumber(L, (lua_Number)value);
   return 1;
@@ -80,11 +88,10 @@ int l_buffer_write_f64le(lua_State* L) {
   double value = (double)luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 8 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_F64);
 
-  memcpy(buf->buffer + (size_t)offset, &value, 8);
-  lua_pushinteger(L, offset + 8 + 1);
+  memcpy(buf->buffer + (size_t)offset, &value, SIZE_F64);
+  lua_pushinteger(L, offset + SIZE_F64 + 1);
   return 1;
 }
 
@@ -93,15 +100,14 @@ int l_buffer_write_f64be(lua_State* L) {
   double value = (double)luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 8 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_F64);
 
-  uint8_t tmp[8];
-  memcpy(tmp, &value, 8);
-  reverse_bytes(tmp, 8);
-  memcpy(buf->buffer + (size_t)offset, tmp, 8);
+  uint8_t tmp[SIZE_F64];
+  memcpy(tmp, &value, SIZE_F64);
+  reverse_bytes(tmp, SIZE_F64);
+  memcpy(buf->buffer + (size_t)offset, tmp, SIZE_F64);
 
-  lua_pushinteger(L, offset + 8 + 1);
+  lua_pushinteger(L, offset + SIZE_F64 + 1);
   return 1;
 }
 
@@ -109,11 +115,10 @@ int l_buffer_read_f64le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 8 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_F64);
 
   double value;
-  memcpy(&value, buf->buffer + (size_t)offset, 8);
+  memcpy(&value, buf->buffer + (size_t)offset, SIZE_F64);
   lua_pushnumber(L, (lua_Number)value);
   return 1;
 }
@@ -122,14 +127,13 @@ int l_buffer_read_f64be(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 8 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_F64);
 
-  uint8_t tmp[8];
-  memcpy(tmp, buf->buffer + (size_t)offset, 8);
-  reverse_bytes(tmp, 8);
+  uint8_t tmp[SIZE_F64];
+  memcpy(tmp, buf->buffer + (size_t)offset, SIZE_F64);
+  reverse_bytes(tmp, SIZE_F64);
   double value;
-  memcpy(&value, tmp, 8);
+  memcpy(&value, tmp, SIZE_F64);
 
   lua_pushnumber(L, (lua_Number)value);
   return 1;
@@ -139,8 +143,7 @@ int l_buffer_read_u32be(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 4 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_UINT32);
 
   const uint8_t* p = buf->buffer + offset;
   uint32_t value = ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
@@ -155,8 +158,7 @@ int l_buffer_write_u32be(lua_State* L) {
   lua_Integer value = luaL_checkinteger(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 4 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_UINT32);
 
   uint8_t* p = buf->buffer + (size_t)offset;
   uint32_t v = (uint32_t)value;
@@ -166,7 +168,7 @@ int l_buffer_write_u32be(lua_State* L) {
   p[2] = (v >> 8) & 0xFF;
   p[3] = v & 0xFF;
 
-  lua_pushinteger(L, offset + 4 + 1);
+  lua_pushinteger(L, offset + SIZE_UINT32 + 1);
   return 1;
 }
 
@@ -174,8 +176,7 @@ int l_buffer_read_u32le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 4 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_UINT32);
 
   const uint8_t* p = buf->buffer + (size_t)offset;
   uint32_t value = ((uint32_t)p[0]) | ((uint32_t)p[1] << 8) |
@@ -190,8 +191,7 @@ int l_buffer_write_u32le(lua_State* L) {
   lua_Integer value = luaL_checkinteger(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 4 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_UINT32);
 
   uint8_t* p = buf->buffer + (size_t)offset;
   uint32_t v = (uint32_t)value;
@@ -201,7 +201,7 @@ int l_buffer_write_u32le(lua_State* L) {
   p[2] = (v >> 16) & 0xFF;
   p[3] = (v >> 24) & 0xFF;
 
-  lua_pushinteger(L, offset + 4 + 1);
+  lua_pushinteger(L, offset + SIZE_UINT32 + 1);
   return 1;
 }
 
@@ -209,8 +209,7 @@ int l_buffer_read_u16le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 2 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_UINT16);
 
   const uint8_t* p = buf->buffer + (size_t)offset;
   uint16_t value = ((uint16_t)p[0]) | ((uint16_t)p[1] << 8);
@@ -219,13 +218,13 @@ int l_buffer_read_u16le(lua_State* L) {
   return 1;
 }
 
+// TODO: Allow number to be passed in instead of integer only
 int l_buffer_write_u16le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer value = luaL_checkinteger(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 2 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_UINT16);
 
   uint8_t* p = buf->buffer + (size_t)offset;
   uint16_t v = (uint16_t)value;
@@ -233,7 +232,7 @@ int l_buffer_write_u16le(lua_State* L) {
   p[0] = v & 0xFF;
   p[1] = (v >> 8) & 0xFF;
 
-  lua_pushinteger(L, offset + 2 + 1);
+  lua_pushinteger(L, offset + SIZE_UINT16 + 1);
   return 1;
 }
 
@@ -241,8 +240,7 @@ int l_buffer_read_i16le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 2 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_INT16);
 
   const uint8_t* p = buf->buffer + (size_t)offset;
   int16_t value = (int16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
@@ -256,8 +254,7 @@ int l_buffer_write_i16le(lua_State* L) {
   lua_Integer value = luaL_checkinteger(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
-  if (offset < 0 || (size_t)offset + 2 > buf->size)
-    return luaL_error(L, ERR_OFFSET_OUT_OF_RANGE);
+  buffer_check(L, buf, offset, SIZE_INT16);
 
   uint8_t* p = buf->buffer + (size_t)offset;
   int16_t v = (int16_t)value;
@@ -265,7 +262,7 @@ int l_buffer_write_i16le(lua_State* L) {
   p[0] = v & 0xFF;
   p[1] = (v >> 8) & 0xFF;
 
-  lua_pushinteger(L, offset + 2 + 1);
+  lua_pushinteger(L, offset + SIZE_INT16 + 1);
   return 1;
 }
 
@@ -293,7 +290,7 @@ int l_buffer_tostring(lua_State* L) {
     lua_pushlstring(L, (const char*)slice_buf, slice_len);
   } else if (strcasecmp(encoding, ENCODING_BASE16) == 0) {
     char* hexstr = hex_encode(slice_buf, slice_len);
-    if (!hexstr) return throw_lua_oom(L, slice_len);
+    if (!hexstr) return throw_luaoom(L, slice_len);
     lua_pushstring(L, hexstr);
     FREE(hexstr);
   } else {
