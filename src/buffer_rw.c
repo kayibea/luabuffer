@@ -155,7 +155,7 @@ int l_buffer_read_u32be(lua_State* L) {
 
 int l_buffer_write_u32be(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Integer value = luaL_checkinteger(L, 2);
+  lua_Number value = luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
   buffer_check(L, buf, offset, SIZE_UINT32);
@@ -188,7 +188,7 @@ int l_buffer_read_u32le(lua_State* L) {
 
 int l_buffer_write_u32le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Integer value = luaL_checkinteger(L, 2);
+  lua_Number value = luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
   buffer_check(L, buf, offset, SIZE_UINT32);
@@ -218,10 +218,9 @@ int l_buffer_read_u16le(lua_State* L) {
   return 1;
 }
 
-// TODO: Allow number to be passed in instead of integer only
 int l_buffer_write_u16le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Integer value = luaL_checkinteger(L, 2);
+  lua_Number value = luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
   buffer_check(L, buf, offset, SIZE_UINT16);
@@ -282,7 +281,7 @@ int l_buffer_read_i16le(lua_State* L) {
 
 int l_buffer_write_i16le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Integer value = luaL_checkinteger(L, 2);
+  lua_Number value = luaL_checknumber(L, 2);
   lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
 
   buffer_check(L, buf, offset, SIZE_INT16);
