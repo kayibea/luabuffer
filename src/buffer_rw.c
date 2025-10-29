@@ -27,6 +27,94 @@ static inline void buffer_check(lua_State* L, const Buffer* buf,
                offset + 1, (lua_Integer)buf->size, (lua_Integer)len);
 }
 
+static int buffer_read_int(lua_State* L, size_t byteLength, bool littleEndian) {
+  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+  lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
+
+  buffer_check(L, buf, offset, byteLength);
+
+  const uint8_t* p = buf->buffer + (size_t)offset;
+  int64_t value = 0;
+
+  if (littleEndian) {
+    for (size_t i = 0; i < byteLength; i++) value |= (int64_t)p[i] << (8 * i);
+  } else {
+    for (size_t i = 0; i < byteLength; i++)
+      value |= (int64_t)p[i] << (8 * (byteLength - 1 - i));
+  }
+
+  int shift = 64 - (byteLength * 8);
+  value = (value << shift) >> shift;
+
+  lua_pushinteger(L, (lua_Integer)value);
+  return 1;
+}
+
+static int buffer_read_uint(lua_State* L, size_t byteLength,
+                            bool littleEndian) {
+  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+  lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
+
+  buffer_check(L, buf, offset, byteLength);
+
+  const uint8_t* p = buf->buffer + (size_t)offset;
+  uint64_t value = 0;
+
+  if (littleEndian) {
+    for (size_t i = 0; i < byteLength; i++) value |= (uint64_t)p[i] << (8 * i);
+  } else {
+    for (size_t i = 0; i < byteLength; i++)
+      value |= (uint64_t)p[i] << (8 * (byteLength - 1 - i));
+  }
+
+  lua_pushinteger(L, (lua_Integer)value);
+  return 1;
+}
+
+static int buffer_write_int(lua_State* L, size_t byteLength,
+                            bool littleEndian) {
+  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+  lua_Number value = luaL_checknumber(L, 2);
+  lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
+
+  buffer_check(L, buf, offset, byteLength);
+
+  int64_t v = (int64_t)value;
+  uint8_t* p = buf->buffer + (size_t)offset;
+
+  if (littleEndian) {
+    for (size_t i = 0; i < byteLength; i++) p[i] = (v >> (8 * i)) & 0xFF;
+  } else {
+    for (size_t i = 0; i < byteLength; i++)
+      p[byteLength - 1 - i] = (v >> (8 * i)) & 0xFF;
+  }
+
+  lua_pushinteger(L, offset + byteLength + 1);
+  return 1;
+}
+
+static int buffer_write_uint(lua_State* L, size_t byteLength,
+                             bool littleEndian) {
+  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+  lua_Number value = luaL_checknumber(L, 2);
+  lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
+
+  buffer_check(L, buf, offset, byteLength);
+
+  uint64_t v = (uint64_t)value;
+  uint8_t* p = buf->buffer + (size_t)offset;
+
+  if (littleEndian) {
+    for (size_t i = 0; i < byteLength; i++) p[i] = (v >> (8 * i)) & 0xFF;
+  } else {
+    for (size_t i = 0; i < byteLength; i++)
+      p[byteLength - 1 - i] = (v >> (8 * i)) & 0xFF;
+  }
+
+  lua_pushinteger(L, offset + byteLength + 1);
+  return 1;
+}
+
 int l_buffer_write_f32le(lua_State* L) {
   Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
   float value = (float)luaL_checknumber(L, 2);
@@ -140,160 +228,43 @@ int l_buffer_read_f64be(lua_State* L) {
 }
 
 int l_buffer_read_u32be(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
-
-  buffer_check(L, buf, offset, SIZE_UINT32);
-
-  const uint8_t* p = buf->buffer + offset;
-  uint32_t value = ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
-                   ((uint32_t)p[2] << 8) | ((uint32_t)p[3]);
-
-  lua_pushinteger(L, (lua_Integer)value);
-  return 1;
+  return buffer_read_uint(L, SIZE_UINT32, false);
 }
 
 int l_buffer_write_u32be(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Number value = luaL_checknumber(L, 2);
-  lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
-
-  buffer_check(L, buf, offset, SIZE_UINT32);
-
-  uint8_t* p = buf->buffer + (size_t)offset;
-  uint32_t v = (uint32_t)value;
-
-  p[0] = (v >> 24) & 0xFF;
-  p[1] = (v >> 16) & 0xFF;
-  p[2] = (v >> 8) & 0xFF;
-  p[3] = v & 0xFF;
-
-  lua_pushinteger(L, offset + SIZE_UINT32 + 1);
-  return 1;
+  return buffer_write_uint(L, SIZE_UINT32, false);
 }
 
 int l_buffer_read_u32le(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
-
-  buffer_check(L, buf, offset, SIZE_UINT32);
-
-  const uint8_t* p = buf->buffer + (size_t)offset;
-  uint32_t value = ((uint32_t)p[0]) | ((uint32_t)p[1] << 8) |
-                   ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
-
-  lua_pushinteger(L, (lua_Integer)value);
-  return 1;
+  return buffer_read_uint(L, SIZE_UINT32, true);
 }
 
 int l_buffer_write_u32le(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Number value = luaL_checknumber(L, 2);
-  lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
-
-  buffer_check(L, buf, offset, SIZE_UINT32);
-
-  uint8_t* p = buf->buffer + (size_t)offset;
-  uint32_t v = (uint32_t)value;
-
-  p[0] = v & 0xFF;
-  p[1] = (v >> 8) & 0xFF;
-  p[2] = (v >> 16) & 0xFF;
-  p[3] = (v >> 24) & 0xFF;
-
-  lua_pushinteger(L, offset + SIZE_UINT32 + 1);
-  return 1;
+  return buffer_write_uint(L, SIZE_UINT32, true);
 }
 
 int l_buffer_read_u16le(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
-
-  buffer_check(L, buf, offset, SIZE_UINT16);
-
-  const uint8_t* p = buf->buffer + (size_t)offset;
-  uint16_t value = ((uint16_t)p[0]) | ((uint16_t)p[1] << 8);
-
-  lua_pushinteger(L, (lua_Integer)value);
-  return 1;
+  return buffer_read_uint(L, SIZE_UINT16, true);
 }
 
 int l_buffer_write_u16le(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Number value = luaL_checknumber(L, 2);
-  lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
-
-  buffer_check(L, buf, offset, SIZE_UINT16);
-
-  uint8_t* p = buf->buffer + (size_t)offset;
-  uint16_t v = (uint16_t)value;
-
-  p[0] = v & 0xFF;
-  p[1] = (v >> 8) & 0xFF;
-
-  lua_pushinteger(L, offset + SIZE_UINT16 + 1);
-  return 1;
+  return buffer_write_uint(L, SIZE_UINT16, true);
 }
 
 int l_buffer_write_i16be(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Number value = luaL_checknumber(L, 2);
-  lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
-
-  buffer_check(L, buf, offset, SIZE_INT16);
-
-  uint8_t* p = buf->buffer + (size_t)offset;
-  int16_t v = (int16_t)value;
-
-  p[0] = (v >> 8) & 0xFF;
-  p[1] = v & 0xFF;
-
-  lua_pushinteger(L, offset + SIZE_INT16 + 1);
-  return 1;
+  return buffer_write_int(L, SIZE_INT16, false);
 }
 
 int l_buffer_read_i16be(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
-
-  buffer_check(L, buf, offset, SIZE_INT16);
-
-  const uint8_t* p = buf->buffer + (size_t)offset;
-  int16_t value = (int16_t)(((uint16_t)p[0] << 8) | p[1]);
-
-  lua_pushinteger(L, (lua_Integer)value);
-
-  return 1;
+  return buffer_read_int(L, SIZE_INT16, false);
 }
 
 int l_buffer_read_i16le(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Integer offset = luaL_optinteger(L, 2, 1) - 1;
-
-  buffer_check(L, buf, offset, SIZE_INT16);
-
-  const uint8_t* p = buf->buffer + (size_t)offset;
-  int16_t value = (int16_t)(p[0] | ((uint16_t)p[1] << 8));
-
-  lua_pushinteger(L, (lua_Integer)value);
-  return 1;
+  return buffer_read_int(L, SIZE_INT16, false);
 }
 
 int l_buffer_write_i16le(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  lua_Number value = luaL_checknumber(L, 2);
-  lua_Integer offset = luaL_optinteger(L, 3, 1) - 1;
-
-  buffer_check(L, buf, offset, SIZE_INT16);
-
-  uint8_t* p = buf->buffer + (size_t)offset;
-  int16_t v = (int16_t)value;
-
-  p[0] = v & 0xFF;
-  p[1] = (v >> 8) & 0xFF;
-
-  lua_pushinteger(L, offset + SIZE_INT16 + 1);
-  return 1;
+  return buffer_write_int(L, SIZE_INT16, false);
 }
 
 int l_buffer_tostring(lua_State* L) {
