@@ -69,7 +69,7 @@ static int buffer_alloc_fstream(lua_State* L) {
   if (size <= 0) return luaL_error(L, "Cannot create zero-length buffer");
 
   uint8_t* data = malloc((size_t)size);
-  if (!data) return throw_lua_oom(L, size);
+  if (!data) return throw_luaoom(L, size);
 
   size_t got = fread(data, 1, (size_t)size, stream->f);
   if (got == 0) {
@@ -94,7 +94,7 @@ static int buffer_alloc_ftable(lua_State* L) {
   Buffer* buf = lua_newuserdata(L, sizeof(Buffer));
   buf->size = len;
   buf->buffer = malloc(len);
-  if (!buf->buffer) return throw_lua_oom(L, len);
+  if (!buf->buffer) return throw_luaoom(L, len);
 
   for (size_t i = 1; i <= len; i++) {
     lua_rawgeti(L, 1, (lua_Integer)i);
@@ -121,7 +121,7 @@ static int buffer_alloc_fbuffer(lua_State* L) {
 
   buf->size = src->size;
   buf->buffer = malloc(src->size);
-  if (!buf->buffer) return throw_lua_oom(L, src->size);
+  if (!buf->buffer) return throw_luaoom(L, src->size);
 
   memcpy(buf->buffer, src->buffer, src->size);
 
@@ -142,7 +142,7 @@ static int buffer_alloc_fstring(lua_State* L) {
 
   if (strcasecmp(encoding, ENCODING_UTF8) == 0) {
     decoded = malloc(in_len);
-    if (!decoded) return throw_lua_oom(L, in_len);
+    if (!decoded) return throw_luaoom(L, in_len);
     memcpy(decoded, input, in_len);
     out_len = in_len;
   } else if (strcasecmp(encoding, ENCODING_BASE16) == 0) {
@@ -172,7 +172,7 @@ int l_buffer_alloc_unsafe(lua_State* L) {
   buf->size = (size_t)size;
   buf->buffer = malloc(buf->size);
 
-  if (!buf->buffer) return throw_lua_oom(L, buf->size);
+  if (!buf->buffer) return throw_luaoom(L, buf->size);
 
   luaL_getmetatable(L, BUFFER_MT);
   lua_setmetatable(L, -2);
@@ -192,7 +192,7 @@ int l_buffer_alloc(lua_State* L) {
   buf->size = (size_t)size;
   buf->buffer = calloc(buf->size, 1);
 
-  if (!buf->buffer) return throw_lua_oom(L, buf->size);
+  if (!buf->buffer) return throw_luaoom(L, buf->size);
 
   if (canfill) {
     int type = lua_type(L, 2);

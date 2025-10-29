@@ -25,7 +25,7 @@ int l_buffer__concat(lua_State* L) {
   Buffer* newbuf = lua_newuserdata(L, sizeof(Buffer));
   newbuf->size = buf->size + other->size;
   newbuf->buffer = malloc(newbuf->size);
-  if (!newbuf->buffer) return throw_lua_oom(L, newbuf->size);
+  if (!newbuf->buffer) return throw_luaoom(L, newbuf->size);
 
   memcpy(newbuf->buffer, buf->buffer, buf->size);
   memcpy(newbuf->buffer + buf->size, other->buffer, other->size);
