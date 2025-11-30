@@ -10,7 +10,7 @@ A Node.js-style Buffer implementation for Lua.
 ## Features
 
 - Buffer allocation (`alloc`, `allocUnsafe`)
-- Buffer creation from strings, tables, files
+- Buffer creation from strings, tables
 - Read/write methods for various types (uint32, float, double)
 - Basic buffer operations
 
@@ -35,10 +35,6 @@ print(buf2:tostring()) -- "hello"
 buf:writeUInt32LE(0x12345678, 1)
 local n = buf:readUInt32LE(1)
 print(string.format("0x%08x", n)) -- "0x12345678"
-
--- Create a buffer from a hex string
-local buf3 = buffer.from("68656c6c6f", "hex")
-print(buf3:tostring()) -- "hello"
 ```
 
 ## License

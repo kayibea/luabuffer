@@ -8,24 +8,25 @@
 #include <sys/param.h>
 
 #include "buffer.h"
-#include "common.h"
 #include "errors.h"
 
-int l_buffer__gc(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  // if (buf->buffer) FREE(buf->buffer);
-  FREE(buf->buffer);
+int l_buffer_meta_gc(lua_State *L) {
+  buf_t *buf = luaL_checkudata(L, 1, BUFFER_MT);
+  if (buf->buffer) {
+    free(buf->buffer);
+  }
   return 0;
 }
 
-int l_buffer__concat(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  Buffer* other = luaL_checkudata(L, 2, BUFFER_MT);
+int l_buffer_meta_concat(lua_State *L) {
+  buf_t *buf = luaL_checkudata(L, 1, BUFFER_MT);
+  buf_t *other = luaL_checkudata(L, 2, BUFFER_MT);
 
-  Buffer* newbuf = lua_newuserdata(L, sizeof(Buffer));
+  buf_t *newbuf = lua_newuserdata(L, sizeof(buf_t));
   newbuf->size = buf->size + other->size;
   newbuf->buffer = malloc(newbuf->size);
-  if (!newbuf->buffer) return throw_luaoom(L, newbuf->size);
+  if (!newbuf->buffer)
+    return throw_luaoom(L, newbuf->size);
 
   memcpy(newbuf->buffer, buf->buffer, buf->size);
   memcpy(newbuf->buffer + buf->size, other->buffer, other->size);
@@ -36,23 +37,23 @@ int l_buffer__concat(lua_State* L) {
   return 1;
 }
 
-int l_buffer__eq(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
-  Buffer* other = luaL_checkudata(L, 2, BUFFER_MT);
+int l_buffer_meta_eq(lua_State *L) {
+  buf_t *buf = luaL_checkudata(L, 1, BUFFER_MT);
+  buf_t *other = luaL_checkudata(L, 2, BUFFER_MT);
 
   lua_pushboolean(L, buf->size == other->size &&
                          memcmp(buf->buffer, other->buffer, buf->size) == 0);
   return 1;
 }
 
-int l_buffer__len(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+int l_buffer_meta_len(lua_State *L) {
+  buf_t *buf = luaL_checkudata(L, 1, BUFFER_MT);
   lua_pushinteger(L, (lua_Integer)buf->size);
   return 1;
 }
 
-int l_buffer__index(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+int l_buffer_meta_index(lua_State *L) {
+  buf_t *buf = luaL_checkudata(L, 1, BUFFER_MT);
 
   // TODO: Remove type check redoundouncy
   if (lua_type(L, 2) == LUA_TNUMBER && lua_isinteger(L, 2)) {
@@ -70,8 +71,8 @@ int l_buffer__index(lua_State* L) {
   return 1;
 }
 
-int l_buffer__newindex(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+int l_buffer_meta_newindex(lua_State *L) {
+  buf_t *buf = luaL_checkudata(L, 1, BUFFER_MT);
   size_t index = (size_t)luaL_checkinteger(L, 2);
   lua_Integer value = luaL_checkinteger(L, 3);
 
@@ -81,8 +82,8 @@ int l_buffer__newindex(lua_State* L) {
   return 0;
 }
 
-int l_buffer__tostring(lua_State* L) {
-  Buffer* buf = luaL_checkudata(L, 1, BUFFER_MT);
+int l_buffer_meta_tostring(lua_State *L) {
+  buf_t *buf = luaL_checkudata(L, 1, BUFFER_MT);
   size_t display_len = (size_t)MIN(buf->size, BUFFER_INSPECT_MAX_BYTES);
 
   luaL_Buffer b;
@@ -91,10 +92,11 @@ int l_buffer__tostring(lua_State* L) {
   luaL_addstring(&b, "<Buffer ");
 
   for (size_t i = 0; i < display_len; ++i) {
-    char tmp[4];  // 2 hex digits + space + null
+    char tmp[4]; // 2 hex digits + space + null
     snprintf(tmp, sizeof(tmp), "%02x", buf->buffer[i]);
     luaL_addstring(&b, tmp);
-    if (i != display_len - 1) luaL_addchar(&b, ' ');
+    if (i != display_len - 1)
+      luaL_addchar(&b, ' ');
   }
 
   if (buf->size > BUFFER_INSPECT_MAX_BYTES) {

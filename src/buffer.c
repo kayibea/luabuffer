@@ -10,7 +10,7 @@
 
 static const luaL_Reg buffer_methods[] = {
     //
-    {"write", l_buffer_write_string},
+    // {"write", l_buffer_write_string},
     {"tostring", l_buffer_tostring},
     {"readUInt32LE", l_buffer_read_u32le},
     {"readUInt32BE", l_buffer_read_u32be},
@@ -34,13 +34,13 @@ static const luaL_Reg buffer_methods[] = {
 
 static const luaL_Reg buffer_meta[] = {
     //
-    {"__gc", l_buffer__gc},
-    {"__eq", l_buffer__eq},
-    {"__len", l_buffer__len},
-    {"__index", l_buffer__index},
-    {"__concat", l_buffer__concat},
-    {"__newindex", l_buffer__newindex},
-    {"__tostring", l_buffer__tostring},
+    {"__gc", l_buffer_meta_gc},
+    {"__eq", l_buffer_meta_eq},
+    {"__len", l_buffer_meta_len},
+    {"__index", l_buffer_meta_index},
+    {"__concat", l_buffer_meta_concat},
+    {"__newindex", l_buffer_meta_newindex},
+    {"__tostring", l_buffer_meta_tostring},
     {NULL, NULL}};
 
 static const luaL_Reg buffer_module[] = {
@@ -50,7 +50,7 @@ static const luaL_Reg buffer_module[] = {
     {"allocUnsafe", l_buffer_alloc_unsafe},
     {NULL, NULL}};
 
-int luaopen_buffer(lua_State* L) {
+int luaopen_buffer(lua_State *L) {
   luaL_newmetatable(L, BUFFER_MT);
   luaL_setfuncs(L, buffer_meta, 0);
 
